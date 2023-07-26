@@ -39,6 +39,8 @@ class LoginFragment : Fragment() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
             readlnOrNull()
+            val action = LoginFragmentDirections.actionLoginFragmentToChatFragment()
+            findNavController().navigate(action)
         }
     }
 
