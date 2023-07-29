@@ -1,8 +1,10 @@
 package com.mertadali.walkietalkie
 
+
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.WindowManager
+
 import com.mertadali.walkietalkie.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -14,5 +16,13 @@ class MainActivity : AppCompatActivity() {
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
 
+
+
+
+
+
+
     }
+
+
 }

@@ -37,7 +37,7 @@ class LoginFragment : Fragment() {
         super.onStart()
         // Check if user is signed in (non-null) and update UI accordingly.
         val currentUser = auth.currentUser
-        if (currentUser != null) {
+        if (FirebaseAuth.getInstance().currentUser != null) {
             readlnOrNull()
             val action = LoginFragmentDirections.actionLoginFragmentToChatFragment()
             findNavController().navigate(action)
