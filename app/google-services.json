@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "785897460436",
+    "project_id": "walkietalkieapp-f8c3c",
+    "storage_bucket": "walkietalkieapp-f8c3c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:785897460436:android:232866cb4af2bf825c2141",
+        "android_client_info": {
+          "package_name": "com.mertadali.walkietalkie"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "785897460436-58ub102acb9pk0riu6ntu46ffmkf1o3n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8VzEMUN1tCrImp2O5Ohb1jkyMEodTK1s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "785897460436-58ub102acb9pk0riu6ntu46ffmkf1o3n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
