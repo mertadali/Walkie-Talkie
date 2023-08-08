@@ -7,7 +7,6 @@ import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.view.*
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -56,6 +55,7 @@ class ChatFragment : Fragment() {
 
 
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         firestore = Firebase.firestore
@@ -75,14 +75,13 @@ class ChatFragment : Fragment() {
 
 
 
+
+
         if (ActivityCompat.checkSelfPermission(requireActivity(), android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(requireActivity(),
                 arrayOf(android.Manifest.permission.RECORD_AUDIO,
                     android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     android.Manifest.permission.READ_EXTERNAL_STORAGE),111)
-
-
-
 
 
 
@@ -95,8 +94,6 @@ class ChatFragment : Fragment() {
 
 
 
-
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         _binding = FragmentChatBinding.inflate(inflater, container, false)
@@ -106,8 +103,6 @@ class ChatFragment : Fragment() {
 
 
     }
-
-
 
 
     @SuppressLint("SuspiciousIndentation")
@@ -188,10 +183,6 @@ class ChatFragment : Fragment() {
 
 
 
-
-
-
-
         }
             firestore.collection("Chats").orderBy("date", Query.Direction.ASCENDING)
                 .addSnapshotListener { value, error ->
@@ -228,7 +219,6 @@ class ChatFragment : Fragment() {
                 }
 
 
-
         }
 
 
@@ -251,7 +241,6 @@ class ChatFragment : Fragment() {
                     e.printStackTrace()
 
                 }
-
 
 
 
@@ -284,7 +273,6 @@ class ChatFragment : Fragment() {
 
     private fun notificationSend(notification: PushNotification) = CoroutineScope(Dispatchers.IO).launch {
 
-
         try {
 
            val response = RetrofitObject.api.postNotification(notification)
@@ -313,8 +301,6 @@ class ChatFragment : Fragment() {
     private fun registerLauncher(){
           PackageManager.PERMISSION_GRANTED
         }
-
-
 
 
 
