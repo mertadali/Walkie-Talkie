@@ -1,5 +1,7 @@
 package com.mertadali.walkietalkie
 
+import android.annotation.SuppressLint
+import android.media.MediaPlayer
 import android.view.*
 import android.widget.TextView
 
@@ -7,12 +9,15 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
+import java.io.IOException
 
 
-class ChatRecyclerView : RecyclerView.Adapter<ChatRecyclerView.ChatHolder>()  {
+class ChatRecyclerView : RecyclerView.Adapter<ChatRecyclerView.ChatHolder>()   {
 
     private val VIEW_TYPE_MESSAGE_SENT = 1
     private val VIEW_TYPE_MESSAGE_RECEIVED = 2
+
+
 
     class ChatHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
 
@@ -54,6 +59,7 @@ class ChatRecyclerView : RecyclerView.Adapter<ChatRecyclerView.ChatHolder>()  {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatHolder {
         if (viewType == VIEW_TYPE_MESSAGE_RECEIVED){
             val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_row,parent,false)
+
             return ChatHolder(view)
 
         }else{
@@ -69,13 +75,23 @@ class ChatRecyclerView : RecyclerView.Adapter<ChatRecyclerView.ChatHolder>()  {
 
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ChatHolder, position: Int) {
+
+
         val textView = holder.itemView.findViewById<TextView>(R.id.chatRecyclerTextView)
+
         textView.text = "${chats.get(position).user} : ${chats.get(position).text}"
+
+
+
+        }
+
+
+
 
     }
 
 
 
 
-}

@@ -28,12 +28,19 @@ class LoginFragment : Fragment() {
         auth = Firebase.auth
 
 
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            readlnOrNull()
+            val action = LoginFragmentDirections.actionLoginFragmentToChatFragment()
+            findNavController().navigate(action)
+
+
     }
 
 
 
 
-    public override fun onStart() {
+   /* public override fun onStart() {
         super.onStart()
         // Check if user is signed in (non-null) and update UI accordingly.
         val currentUser = auth.currentUser
@@ -41,7 +48,7 @@ class LoginFragment : Fragment() {
             readlnOrNull()
             val action = LoginFragmentDirections.actionLoginFragmentToChatFragment()
             findNavController().navigate(action)
-        }
+        }*/
     }
 
 

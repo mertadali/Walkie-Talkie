@@ -1,5 +1,7 @@
 package com.mertadali.walkietalkie
 
+
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.media.MediaRecorder
@@ -21,7 +23,11 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.ktx.storage
+import com.google.gson.Gson
 import com.mertadali.walkietalkie.databinding.FragmentChatBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -41,10 +47,10 @@ class ChatFragment : Fragment() {
     private lateinit var adapter: ChatRecyclerView
     private var chats = arrayListOf<Chat>()
     private lateinit var storage : FirebaseStorage
-    private var uri : Uri? = null
+    private lateinit var outputFilePath: String
 
 
-    //private lateinit var permissionLauncher : ActivityResultLauncher<String>
+
 
 
 
@@ -54,6 +60,7 @@ class ChatFragment : Fragment() {
         super.onCreate(savedInstanceState)
         firestore = Firebase.firestore
         auth = Firebase.auth
+        storage = Firebase.storage
 
         mediaPlayer = MediaPlayer()
 
@@ -62,7 +69,10 @@ class ChatFragment : Fragment() {
 
         setHasOptionsMenu(true)
 
-        storage = Firebase.storage
+
+
+
+
 
 
         if (ActivityCompat.checkSelfPermission(requireActivity(), android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
@@ -87,10 +97,7 @@ class ChatFragment : Fragment() {
 
 
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         _binding = FragmentChatBinding.inflate(inflater, container, false)
         val view = binding.root
@@ -103,12 +110,20 @@ class ChatFragment : Fragment() {
 
 
 
+    @SuppressLint("SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        var path: String = Environment.getExternalStorageDirectory().absolutePath
-        path += "/" + UUID.randomUUID().toString() + ".3gp"
+       // var path: String = Environment.getExternalStorageDirectory().absolutePath
+       // path += "/" + UUID.randomUUID().toString() + ".3gp"
 
-        println(path)
+        val uuid = UUID.randomUUID()
+        val pathName = "$uuid.3gp"
+
+        //val outputFile = File(Environment.getExternalStorageDirectory(),pathName)
+        val outputFile = File.createTempFile("Audio", "3gp")
+        outputFilePath = outputFile.absolutePath
+
+        println(outputFilePath)
 
 
 
@@ -123,127 +138,102 @@ class ChatFragment : Fragment() {
         binding.sendButton.setOnClickListener {
 
 
+            val storageRef = storage.reference
 
-          /*  auth.currentUser?.let { FirebaseUser ->
-                val user = FirebaseUser.email
-                val chatText = binding.chatText.text.toString()
-                val date = FieldValue.serverTimestamp()
+            val file = Uri.fromFile(File(outputFilePath))
 
-
+            val voiceReference = storageRef.child("Audio").child(pathName)
 
 
 
-                val dataMap = HashMap<String, Any>()
-                dataMap.put("user", user!!)
-                dataMap.put("text", chatText)
-                dataMap.put("date", date)*/
+            if (file != null){
+                voiceReference.putFile(file).addOnSuccessListener {
+                  val uploadVoiceReference = storage.reference.child("Audio").child(pathName)
+                    uploadVoiceReference.downloadUrl.addOnSuccessListener {
+                        val downloadUrl = it.toString()
+                        auth.currentUser?.let { FirebaseUser ->
+                            val user = FirebaseUser.email
+                            val chatText = binding.chatText.text.toString()
+                            val date = FieldValue.serverTimestamp()
 
 
+                            val dataMap = HashMap<String, Any>()
+                            dataMap.put("user", user!!)
+                            dataMap.put("text", chatText)
+                            dataMap.put("date", date)
+                            dataMap.put("downloadUrl",downloadUrl)
 
 
-
-
-
-                val reference = storage.reference
-                val uri = Uri.fromFile(File(path!!))
-                val voiceReference = reference.child("Audio").child(path)
-
-
-                if (uri != null){
-                    voiceReference.putFile(uri).addOnSuccessListener {
-                        val uploadVoiceReference = storage.reference.child("Audio").child(path)
-                        uploadVoiceReference.downloadUrl.addOnSuccessListener {
-                            val downloadUrl = it.toString()
-                            auth.currentUser?.let { FirebaseUser ->
-                                val user = FirebaseUser.email
-                                val chatText = binding.chatText.text.toString()
-                                val date = FieldValue.serverTimestamp()
-
-
-
-
-
-                                val dataMap = HashMap<String, Any>()
-                                dataMap.put("user", user!!)
-                                dataMap.put("text", chatText)
-                                dataMap.put("date", date)
-                                dataMap.put("donwloadUrl",downloadUrl)
-
-
-
-                                firestore.collection("Chats").add(dataMap).addOnSuccessListener {
+                            firestore.collection("Chats").add(dataMap).addOnCompleteListener {task ->
+                                if (task.isComplete && task.isSuccessful){
                                     binding.chatText.setText("")
-
-
-
-                                }.addOnFailureListener {
-                                    Toast.makeText(requireContext(), it.localizedMessage, Toast.LENGTH_LONG).show()
-                                    binding.chatText.setText("")
-
+                                    println("collection succsess")
                                 }
 
-                            }
 
-                    }.addOnFailureListener {
-                        Toast.makeText(requireContext(),it.localizedMessage,Toast.LENGTH_LONG).show()
+
+                            }.addOnFailureListener {
+                                Toast.makeText(requireContext(), it.localizedMessage, Toast.LENGTH_LONG).show()
+                                binding.chatText.setText("")
+
+                            }
+                        }
+
+                    }
+                }.addOnFailureListener {
+                    Toast.makeText(requireContext(), it.localizedMessage, Toast.LENGTH_LONG).show()
+                }
+            }
+
+
+
+
+
+
+
+
+        }
+            firestore.collection("Chats").orderBy("date", Query.Direction.ASCENDING)
+                .addSnapshotListener { value, error ->
+                    if (error != null) {
+                        Toast.makeText(requireContext(), error.localizedMessage, Toast.LENGTH_LONG)
+                            .show()
+
+                    } else {
+                        if (value != null) {
+                            if (value.isEmpty) {
+                                Toast.makeText(requireContext(), "No message", Toast.LENGTH_LONG).show()
+                            } else {
+
+
+                                val documents = value.documents
+                                chats.clear()
+
+                                for (documents in documents) {
+                                    val text = documents.get("text") as String
+                                    val user = documents.get("user") as String
+                                    val downloadUrl = documents.get("downloadUrl")
+                                    val chat = Chat(user, text,downloadUrl)
+
+
+
+                                    chats.add(chat)
+                                    adapter.chats = chats
+                                }
+                            }
+                            adapter.notifyDataSetChanged()
+
 
                     }
                 }
 
 
 
-
-
-
-               /* firestore.collection("Chats").add(dataMap).addOnSuccessListener {
-                    binding.chatText.setText("")
-
-
-                }.addOnFailureListener {
-                    Toast.makeText(requireContext(), it.localizedMessage, Toast.LENGTH_LONG).show()
-                    binding.chatText.setText("")
-
-                }*/
-
-
-
-
-            }
         }
 
 
 
-        firestore.collection("Chats").orderBy("date", Query.Direction.ASCENDING)
-            .addSnapshotListener { value, error ->
-                if (error != null) {
-                    Toast.makeText(requireContext(), error.localizedMessage, Toast.LENGTH_LONG)
-                        .show()
 
-                } else {
-                    if (value != null) {
-                        if (value.isEmpty) {
-                            Toast.makeText(requireContext(), "No message", Toast.LENGTH_LONG).show()
-                        } else {
-                            val documents = value.documents
-                            chats.clear()
-
-                            for (documents in documents) {
-                                val text = documents.get("text") as String
-                                val user = documents.get("user") as String
-                                val chat = Chat(user, text)
-
-
-
-
-                                chats.add(chat)
-                                adapter.chats = chats
-                            }
-                        }
-                        adapter.notifyDataSetChanged()
-                    }
-
-                }
-            }
         binding.recordButton.setOnClickListener {
             println("deneme 1")
 
@@ -253,13 +243,13 @@ class ChatFragment : Fragment() {
                     mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
                     mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
                     mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)     // Tekrar kontrol et bu kısımı
-                    mediaRecorder.setOutputFile(path)
+                    mediaRecorder.setOutputFile(outputFilePath)
                     mediaRecorder.prepare()
                     mediaRecorder.start()
 
                 }catch (e : IOException){
                     e.printStackTrace()
-                    println(e)
+
                 }
 
 
@@ -276,8 +266,8 @@ class ChatFragment : Fragment() {
         }
         binding.startButton.setOnClickListener {
             try {
-                             val mediaPlayer = MediaPlayer()
-                mediaPlayer.setDataSource(path)
+                val mediaPlayer = MediaPlayer()
+                mediaPlayer.setDataSource(outputFilePath)
                 mediaPlayer.prepare()
                 mediaPlayer.start()
                 binding.recordButton.isEnabled = false
@@ -290,8 +280,28 @@ class ChatFragment : Fragment() {
         }
 
 
-
         }
+
+    private fun notificationSend(notification: PushNotification) = CoroutineScope(Dispatchers.IO).launch {
+
+
+        try {
+
+           val response = RetrofitObject.api.postNotification(notification)
+            if (response.isSuccessful){
+                println(Gson().toJson(response))
+
+            }else{
+                println(response.errorBody().toString())
+            }
+
+
+
+        }catch (e: IOException){
+            e.printStackTrace()
+        }
+    }
+
 
 
 
@@ -301,9 +311,12 @@ class ChatFragment : Fragment() {
     }
 
     private fun registerLauncher(){
-
-            PackageManager.PERMISSION_GRANTED
+          PackageManager.PERMISSION_GRANTED
         }
+
+
+
+
 
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -311,6 +324,7 @@ class ChatFragment : Fragment() {
         inflater.inflate(R.menu.signout_menu,menu)
         super.onCreateOptionsMenu(menu, inflater)
     }
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         FirebaseAuth.getInstance().signOut()
