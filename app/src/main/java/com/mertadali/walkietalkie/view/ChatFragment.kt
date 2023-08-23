@@ -1,4 +1,4 @@
-package com.mertadali.walkietalkie
+package com.mertadali.walkietalkie.view
 
 
 import android.annotation.SuppressLint
@@ -20,17 +20,20 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.ktx.storage
-import com.google.gson.Gson
+import com.mertadali.walkietalkie.R
 import com.mertadali.walkietalkie.databinding.FragmentChatBinding
+import com.mertadali.walkietalkie.model.Chat
+import com.mertadali.walkietalkie.model.PushNotification
+import com.mertadali.walkietalkie.service.RetrofitObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 import java.util.*
-import kotlin.collections.HashMap
 
 
 @Suppress("DEPRECATION")
@@ -46,7 +49,10 @@ class ChatFragment : Fragment() {
     private lateinit var adapter: ChatRecyclerView
     private var chats = arrayListOf<Chat>()
     private lateinit var storage : FirebaseStorage
-    private lateinit var outputFilePath: String
+   private lateinit var outputFilePath: String
+
+
+    private val topic = "/topics/generalInfo"
 
 
 
@@ -69,9 +75,7 @@ class ChatFragment : Fragment() {
 
         setHasOptionsMenu(true)
 
-
-
-
+        FirebaseMessaging.getInstance().subscribeToTopic(topic)
 
 
 
@@ -105,14 +109,14 @@ class ChatFragment : Fragment() {
     }
 
 
-    @SuppressLint("SuspiciousIndentation")
+    @SuppressLint("SuspiciousIndentation", "NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
        // var path: String = Environment.getExternalStorageDirectory().absolutePath
        // path += "/" + UUID.randomUUID().toString() + ".3gp"
 
-        val uuid = UUID.randomUUID()
-        val pathName = "$uuid.3gp"
+       // val uuid = UUID.randomUUID()
+        val pathName = ".3gp"
 
         //val outputFile = File(Environment.getExternalStorageDirectory(),pathName)
         val outputFile = File.createTempFile("Audio", "3gp")
@@ -132,43 +136,67 @@ class ChatFragment : Fragment() {
 
         binding.sendButton.setOnClickListener {
 
-
             val storageRef = storage.reference
+
 
             val file = Uri.fromFile(File(outputFilePath))
 
             val voiceReference = storageRef.child("Audio").child(pathName)
 
 
-
-            if (file != null){
+            if (file != null) {
                 voiceReference.putFile(file).addOnSuccessListener {
-                  val uploadVoiceReference = storage.reference.child("Audio").child(pathName)
+                    val uploadVoiceReference = storage.reference.child("Audio").child(pathName)
                     uploadVoiceReference.downloadUrl.addOnSuccessListener {
                         val downloadUrl = it.toString()
+                        println(downloadUrl)
                         auth.currentUser?.let { FirebaseUser ->
                             val user = FirebaseUser.email
-                            val chatText = binding.chatText.text.toString()
+                            val text = binding.chatText.text.toString()
                             val date = FieldValue.serverTimestamp()
 
 
                             val dataMap = HashMap<String, Any>()
                             dataMap.put("user", user!!)
-                            dataMap.put("text", chatText)
+                            dataMap.put("text", text)
                             dataMap.put("date", date)
-                            dataMap.put("downloadUrl",downloadUrl)
-
-
-                            firestore.collection("Chats").add(dataMap).addOnCompleteListener {task ->
-                                if (task.isComplete && task.isSuccessful){
-                                    binding.chatText.setText("")
-                                    println("collection succsess")
-                                }
+                            dataMap.put("downloadUrl", downloadUrl)
 
 
 
-                            }.addOnFailureListener {
-                                Toast.makeText(requireContext(), it.localizedMessage, Toast.LENGTH_LONG).show()
+
+
+
+                            firestore.collection("Chats").add(dataMap)
+                                .addOnCompleteListener { task ->
+                                    if (task.isComplete && task.isSuccessful) {
+                                        binding.chatText.setText("")
+                                        println("collection succsess")
+
+
+
+                                        if (user.isNotEmpty() && downloadUrl.isNotEmpty()) {
+                                            val data = Chat(user, text, downloadUrl)
+                                            val notification = PushNotification(
+                                                data,topic)
+                                            notificationSend(notification)
+
+                                            mediaPlayer.reset()
+                                            mediaPlayer.setDataSource(downloadUrl)
+                                            mediaPlayer.prepare()
+                                            mediaPlayer.start()
+                                        }
+
+
+
+                                    }
+
+                                }.addOnFailureListener {
+                                Toast.makeText(
+                                    requireContext(),
+                                    it.localizedMessage,
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 binding.chatText.setText("")
 
                             }
@@ -179,7 +207,6 @@ class ChatFragment : Fragment() {
                     Toast.makeText(requireContext(), it.localizedMessage, Toast.LENGTH_LONG).show()
                 }
             }
-
 
 
 
@@ -206,6 +233,7 @@ class ChatFragment : Fragment() {
                                     val downloadUrl = documents.get("downloadUrl")
                                     val chat = Chat(user, text,downloadUrl)
 
+                                    println("firestore")
 
 
                                     chats.add(chat)
@@ -269,7 +297,9 @@ class ChatFragment : Fragment() {
         }
 
 
+
         }
+
 
     private fun notificationSend(notification: PushNotification) = CoroutineScope(Dispatchers.IO).launch {
 
@@ -277,15 +307,15 @@ class ChatFragment : Fragment() {
 
            val response = RetrofitObject.api.postNotification(notification)
             if (response.isSuccessful){
-                println(Gson().toJson(response))
+                println(response)
 
             }else{
-                println(response.errorBody().toString())
+                println(response.errorBody())
             }
 
 
 
-        }catch (e: IOException){
+        }catch (e: Exception){
             e.printStackTrace()
         }
     }

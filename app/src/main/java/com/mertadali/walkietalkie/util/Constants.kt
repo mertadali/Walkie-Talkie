@@ -1,4 +1,4 @@
-package com.mertadali.walkietalkie
+package com.mertadali.walkietalkie.util
 
 class Constants {
 

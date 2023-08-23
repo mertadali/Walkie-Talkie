@@ -1,6 +1,7 @@
-package com.mertadali.walkietalkie
+package com.mertadali.walkietalkie.service
 
-import com.mertadali.walkietalkie.Constants.Companion.BASE_URL
+import com.google.android.gms.common.annotation.NonNullApi
+import com.mertadali.walkietalkie.util.Constants.Companion.BASE_URL
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

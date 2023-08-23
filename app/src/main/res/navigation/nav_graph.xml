@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.mertadali.walkietalkie.LoginFragment"
+        android:name="com.mertadali.walkietalkie.view.LoginFragment"
         android:label="fragment_login"
         tools:layout="@layout/fragment_login" >
         <action
@@ -16,7 +16,7 @@
     </fragment>
     <fragment
         android:id="@+id/chatFragment"
-        android:name="com.mertadali.walkietalkie.ChatFragment"
+        android:name="com.mertadali.walkietalkie.view.ChatFragment"
         android:label="fragment_chat"
         tools:layout="@layout/fragment_chat" >
         <action

@@ -1,4 +1,4 @@
-package com.mertadali.walkietalkie
+package com.mertadali.walkietalkie.service
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -15,6 +15,8 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.mertadali.walkietalkie.R
+import com.mertadali.walkietalkie.view.ChatFragment
 
 
 class FirebaseService : FirebaseMessagingService() {
@@ -31,6 +33,9 @@ class FirebaseService : FirebaseMessagingService() {
 
         val pendingIntent = PendingIntent.getActivity(this, 1, intent, FLAG_ONE_SHOT)
 
+
+
+
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         val notificationId = java.util.Random().nextInt()
@@ -39,7 +44,7 @@ class FirebaseService : FirebaseMessagingService() {
             createNotificationChannel(notificationManager)
         }
 
-        val notification = NotificationCompat.Builder(this, channelId)
+        val notification = NotificationCompat.Builder(this,channelId)
             .setContentTitle(message.data["user"])
             .setContentText(message.data["text"])
             .setContentText(message.data["downloadUrl"])

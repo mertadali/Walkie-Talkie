@@ -1,4 +1,4 @@
-package com.mertadali.walkietalkie
+package com.mertadali.walkietalkie.view
 
 
 import androidx.appcompat.app.AppCompatActivity
